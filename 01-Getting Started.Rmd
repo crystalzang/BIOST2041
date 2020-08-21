@@ -1,0 +1,130 @@
+---
+title: "01-Getting Started"
+author: "TA Crystal Zang"
+date: "8/21/2020"
+output:
+  html_document:
+      theme: cerulean
+      toc: true
+      toc_float: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# I. Vectors
+Here we are creating an object and storing values in an object. We say score A is a vector that contains 3 elements, and it's a numeric object. The first element of score A is 85, the second element is 89, and the third element is 92.
+```{r eval=FALSE, include=TRUE}
+scoreA <- c(85, 89, 92)
+scoreA
+class(scoreA)
+
+scoreB <- c(75, 80, 95)
+scoreB
+class(scoreB)
+```
+
+# II. Numeric Operations
+```{r eval=FALSE, include=TRUE}
+1 + 1 
+
+2 * 9 
+
+9/2
+
+9^2
+
+log(9)
+```
+
+Now we know the basic numeric operations, we can perform these operations on the vectors we previously created. 
+```{r eval=FALSE, include=TRUE}
+scoreA + scoreB
+
+#calculate the sum of the elements in scoreA
+sum(scoreA)
+
+#find the number of elements in the vector scoreA
+length(scoreA)
+
+#calculate the mean of scoreA
+mean(scoreA)
+sum(scoreA)/length(scoreA)
+
+#calculate standard deviation of scoreA
+sd(scoreA)
+
+#inter-quatile range of scoreA
+IQR(scoreA)
+
+#summary statistics of scoreA
+summary(scoreA)
+```
+
+## Question 1. What's the difference in the mean score A and mean score B
+
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+<br>
+```{r eval=FALSE, include=FALSE}
+#answer
+mean(scoreA)-mean(scoreB)
+```
+
+
+# III. Dataframe
+**fivethirtyeight** R package hosts many datasets. You can find detailed information on these datasets here: https://fivethirtyeight-r.netlify.app/articles/fivethirtyeight.html. 
+
+
+We will use **bad_drive** data as an example. The raw data behind the story "Dear Mona, Which State Has The Worst Drivers?" https://fivethirtyeight.com/features/which-state-has-the-worst-drivers/
+
+```{r eval=TRUE, include=TRUE}
+#you only install package once
+#install.packages("fivethirtyeight")
+
+# install.packages('fivethirtyeightdata', repos ='https://fivethirtyeightdata.github.io/drat/',type = 'source')
+
+#you need to library the package everytime you open this R Markdown 
+library(fivethirtyeight)
+
+
+#gives you the top rows of the dataset
+head(bad_drivers)
+
+#data documentation including variable explainations
+?bad_drivers
+
+#View drug use dataset in a seperate tab
+#View(bad_drivers)
+```
+
+
+There are 51 states and 8 variables in the dataset. 
+```{r}
+#find the number of row and column
+dim(bad_drivers) 
+```
+
+```{r}
+#using base R to plot the histogram
+hist(bad_drivers$perc_speeding)
+
+#useing ggplot2 package to plot the histogram
+#install.packages("ggplot2")
+
+library(ggplot2)
+
+ggplot(bad_drivers, aes(x = perc_speeding))+
+  geom_histogram(binwidth = 4)  #can manually change binwidth
+```
+
+
+
