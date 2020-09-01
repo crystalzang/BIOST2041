@@ -118,7 +118,3 @@ ggplot(surgery_data, aes(x = age, y = hour))+
    theme_bw() 
 ```
 
-## Session Information
-```{r }
-sessionInfo()
-```
