@@ -1,0 +1,36 @@
+---
+title: "Descriptive Statistics Example"
+author: "Arvon Clemons; Crystal Zang"
+date: "9/1/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Data Description
+
+```{r}
+load("surgery_timing.Rdata")
+
+# summary statistics
+summary(stata_data)
+
+# Create vectors of BMI based on gender
+female_bmi <- stata_data$bmi[stata_data["gender"] == "F"]
+male_bmi <- stata_data$bmi[stata_data["gender"] == "M"]
+
+# Calculate mean BMI
+mean(female_bmi, na.rm = T); mean(male_bmi, na.rm = T)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r echo=FALSE}
+
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
