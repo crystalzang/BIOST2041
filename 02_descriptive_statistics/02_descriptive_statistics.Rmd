@@ -14,10 +14,15 @@ knitr::opts_chunk$set(echo = TRUE)
 * dplyr: dataframe manipulation   
 * ggplot2: visualization    
 ```{r message=FALSE, warning=FALSE}
-#require function combines the "installation" and "library" process of loading an R package
-require(psych) 
-require(ggplot2)
-require(dplyr) 
+#install packages only if you have not already done so 
+list.of.packages <- c("psych", "ggplot2", "dplyr")
+new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+if(length(new.packages)) install.packages(new.packages)
+
+#library packages
+for (pkg in c("psych", "ggplot2", "dplyr")) {
+  library(pkg, character.only = TRUE)
+  }
 ```
 Note that the `message = FALSE, warning=FALSE` parameter was added to the code chunk to prevent printing warning and messages when loading the packages.
 
@@ -113,7 +118,7 @@ ggplot(surgery_data, aes(x = age, y = hour))+
    theme_bw() 
 ```
 
-##Session Information
+## Session Information
 ```{r }
 sessionInfo()
 ```
