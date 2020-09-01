@@ -32,13 +32,30 @@ glimpse(surgery_data) #previw dataframe, provides data type of each variable: nu
 # summary statistics
 describe(surgery_data)
 
-# Create vectors of BMI based on gender
-female_bmi <- surgery_data$bmi[surgery_data["gender"] == "F"]
-male_bmi <- surgery_data$bmi[surgery_data["gender"] == "M"]
+#Check for NAs in gender variable
+anyNA(surgery_data$gender)
+
+#remove observations with missing 'gender' values using "!" operator and is.na() function
+gender_comp <- surgery_data[!is.na(surgery_data$gender), ]
+
+#Create vectors of BMI based on gender; omit NAs
+female_bmi <- gender_comp$bmi[gender_comp["gender"] == "F"]
+male_bmi <- gender_comp$bmi[gender_comp["gender"] == "M"]
 
 # Calculate mean BMI
-# since there are NA values, use na.rm = T to remove the NAs when calculating the mean
+# since there may be NA values, use na.rm = T to remove any possible NAs when calculating the mean
 mean(female_bmi, na.rm = T); mean(male_bmi, na.rm = T)
+
+#Total numbers of obese or non-obese participants by gender
+nonobeseMale <- sum(male_bmi <= 30, na.rm = T)
+nonobeseFemale <- sum(female_bmi <= 30, na.rm = T)
+
+obeseMale <- sum(male_bmi > 30, na.rm = T)
+obeseFemale <- sum(female_bmi > 30, na.rm = T)
+
+# Calculate proportion of participants who are over 30 BMI
+propMale <- obeseMale / (obeseMale + nonobeseMale)
+propFemale <- obeseFemale / (obeseFemale + nonobeseFemale)
 ```
 
 ## Visualization
@@ -50,7 +67,7 @@ You can also embed plots, for example:
 #manually omit NA values in the bar plot using "subset" function
 ggplot(data = subset(surgery_data, !is.na(gender)), aes(x = gender))+
   geom_bar() +  #can manually change binwidth
-  labs(title = "Gender Frequency in Surgery Data",
+  labs(title = "Gender Frequency in Surgery Data", #label axes
        x = "gender") +
   theme_bw() #make the plot looks pretty
 
@@ -59,12 +76,12 @@ ggplot(data = subset(surgery_data, !is.na(gender)), aes(x = gender))+
 ### Histogram plot for numeric variables
 
 ```{r }
-summary(surgery_data$hour)
-hour_mean <- mean(surgery_data$hour) #mean_sd <- sd(surgery_data$hour) #standard deviation
-hour_sd <- sd(surgery_data$hour)
+summary(surgery_data$hour) #summmary statistics for 'hour' variable
+hour_mean <- mean(surgery_data$hour) #mean 
+hour_sd <- sd(surgery_data$hour) #standard deviation
 
 #create a new variable "age_z" in the dataframe, which is the z-score of the age variable
-surgery_data$hour_z <- (surgery_data$age - hour_mean)/hour_sd
+surgery_data$hour_z <- (surgery_data$hour - hour_mean)/hour_sd
 
 #NA values are automatically omitted in the histogram
 ggplot(data = surgery_data, aes(x = hour))+
@@ -74,7 +91,7 @@ ggplot(data = surgery_data, aes(x = hour))+
   theme_bw() #make the plot looks pretty
 ```
 
-Note that we don't have NA values in the hour variable. If there are NAs, use "na.rm=T" in the calculation.
+Note that we don't have NA values in the hour variable. If there are NAs, use "na.rm=T" argument in the mean and sd calculation.
 Ex. "hour_mean <- mean(surgery_data$hour, na.rm=T)"
 
 
