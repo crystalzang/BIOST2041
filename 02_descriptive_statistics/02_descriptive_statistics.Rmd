@@ -1,0 +1,98 @@
+---
+title: "Descriptive Statistics Example"
+author: "Arvon Clemons; Crystal Zang"
+date: "9/1/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Loading R packages
+* psych: we are using the summary statistics fucntions provided in this package   
+* dplyr: dataframe manipulation   
+* ggplot2: visualization    
+```{r message=FALSE, warning=FALSE}
+#require function combines the "installation" and "library" process of loading an R package
+require(psych) 
+require(ggplot2)
+require(dplyr) 
+```
+Note that the `message = FALSE, warning=FALSE` parameter was added to the code chunk to prevent printing warning and messages when loading the packages.
+
+## Data Description
+
+```{r }
+load("surgery_data.RData") #save this data in the same working directory of the rmd file, i.e. in the same folder. You can also click on the Rdata to load it into your RStudio.
+
+#save(surgery_data, file="surgery_data.RData")
+glimpse(surgery_data) #previw dataframe, provides data type of each variable: numeric (dbl meaning double precision floating point number), character (chr)
+
+# summary statistics
+describe(surgery_data)
+
+# Create vectors of BMI based on gender
+female_bmi <- surgery_data$bmi[surgery_data["gender"] == "F"]
+male_bmi <- surgery_data$bmi[surgery_data["gender"] == "M"]
+
+# Calculate mean BMI
+# since there are NA values, use na.rm = T to remove the NAs when calculating the mean
+mean(female_bmi, na.rm = T); mean(male_bmi, na.rm = T)
+```
+
+## Visualization
+
+You can also embed plots, for example:
+
+### Bar plot for categorical variables
+```{r}
+#manually omit NA values in the bar plot using "subset" function
+ggplot(data = subset(surgery_data, !is.na(gender)), aes(x = gender))+
+  geom_bar() +  #can manually change binwidth
+  labs(title = "Gender Frequency in Surgery Data",
+       x = "gender") +
+  theme_bw() #make the plot looks pretty
+
+```
+
+### Histogram plot for numeric variables
+
+```{r }
+summary(surgery_data$hour)
+hour_mean <- mean(surgery_data$hour) #mean_sd <- sd(surgery_data$hour) #standard deviation
+hour_sd <- sd(surgery_data$hour)
+
+#create a new variable "age_z" in the dataframe, which is the z-score of the age variable
+surgery_data$hour_z <- (surgery_data$age - hour_mean)/hour_sd
+
+#NA values are automatically omitted in the histogram
+ggplot(data = surgery_data, aes(x = hour))+
+  geom_histogram(bins = 10) +  #can manually change the number of bins, now we have 10 bins
+  labs(title = "Distributon of Surgery Time",
+       x = "Surgery time (hour)") +
+  theme_bw() #make the plot looks pretty
+```
+
+Note that we don't have NA values in the hour variable. If there are NAs, use "na.rm=T" in the calculation.
+Ex. "hour_mean <- mean(surgery_data$hour, na.rm=T)"
+
+
+
+### Side-by-side Plot for A Numeric Variable by Categories
+```{r}
+ggplot(data = subset(surgery_data, !is.na(gender)), aes(x = hour))+  
+  geom_histogram(bins = 15) +  #can manually change the number of bins, now we have 15 bins
+  labs(title = "Distributon of Surgery Hour by Gender",
+       x = "Surgery time (hour)") +
+  facet_wrap(~gender) + #provides side by side plot by gender
+  theme_bw() #make the plot looks pretty
+```
+
+### Scatter Plot for Two Numeric Variables 
+```{r warning=FALSE}
+ggplot(surgery_data, aes(x = age, y = hour))+ 
+  geom_point(size = 0.5) +#can adjust the size of the point
+   theme_bw() 
+```
+
