@@ -3,8 +3,12 @@ title: "Data Wrangling Using Dplyr"
 author: "TA Crystal"
 date: "9/8/2020"
 output:
-  pdf_document: default
-  html_document: default
+  pdf_document:
+    toc: yes
+  html_document:
+    theme: cerulean
+    toc: yes
+    toc_float: yes
 ---
 
 ```{r setup, include=FALSE}
@@ -37,14 +41,24 @@ load("surgery_data.RData")
 
 
 # I. Mutate Function
-## Example: Change the label for a categorical variable
+## Example I.i: Change the label for a categorical variable
+Before any data wrangling, we will always perform the 3-step procedure for the variable we are interested in:        
+
+1. check the data type (character or integer or others)
+
+2. check whether there are NAs, how many NAs are there in the variable
+
+3. what values are there in the variable. Use `table()` function for categorical variables, use `summary()` function for numerica variables.   
+
 ```{r}
-anyNA(surgery_data$gender) #check whether there are NA values
-
-table(is.na(surgery_data$gender)) #gives the count of NA values: 3
-
+#step 1.
 class(surgery_data$gender) #check the data type 
 
+#step 2.
+anyNA(surgery_data$gender) #check whether there are NA values
+table(is.na(surgery_data$gender)) #gives the count of NA values: 3
+
+#step 3.
 table(surgery_data$gender) #check how many non-NA levels are there in the gender variable
 
 #overwirte gender variable
@@ -54,11 +68,17 @@ surgery_data <- surgery_data%>%
            
 ```
 
-## Example: Group patients whose race, gender are NA into a seperate group
+## Example I.ii: Group patients whose race, gender are NA into a seperate group
 There are 480 patients who have NA values for race. We don't want to exclude these sample from our data, let's treat them as a seperate group called "Unknown"
 ```{r}
+#step 1.
+class(surgery_data$race)
+
+#step 2.
 anyNA(surgery_data$race) #check whether there are NA values
 table(is.na(surgery_data$race)) #gives the count of NA values: 3
+
+#step 3.
 table(surgery_data$race)
 
 surgery_data <- surgery_data%>%
@@ -75,17 +95,20 @@ anyNA(surgery_data$gender)
 
 
 
-## Example: Create age groups from numeric a age variable
+## Example I.iii: Create age groups from a numeric age variable
 ```{r}
-anyNA(surgery_data$age) #check whether there are NA values
-
-table(is.na(surgery_data$age)) #gives the count of NA values: 3
-
+#step 1
 class(surgery_data$age) #check the data type 
 
-summary(surgery_data$age) #check the range of the variable
+#step 2
+anyNA(surgery_data$age) #check whether there are NA values
+table(is.na(surgery_data$age)) #gives the count of NA values: 3
 
-hist(surgery_data$age) #check the distribution of the variable, which helps us to seperate into groups
+#step 3.
+summary(surgery_data$age) #check the range of the variable
+hist(surgery_data$age,
+     main = "Distribution of Age",
+     xlab = "Age") #check the distribution of the variable, which helps us to seperate into groups
 
 surgery_data <- surgery_data%>%
   mutate(age_group = if_else(age < 20, "less than 20",
@@ -98,7 +121,7 @@ table(surgery_data$age_group)
 
 
 # II. Select Function
-### Example: Only keep variables of interest in the dataframe
+### Example II.i: Only keep variables of interest in the dataframe
 ```{r}
 surgery_data_subset <- surgery_data%>%
   select(age, gender, bmi, hour, race)
@@ -107,7 +130,7 @@ glimpse(surgery_data_subset)
 
 
 # III. Filter Function
-## Example: Identify one African American patients
+## Example III.i: Identify one African American patients
 ```{r}
 table(surgery_data$race)
 
@@ -115,18 +138,22 @@ surgery_data_AfricanAmerican <- surgery_data%>%
   filter(race == "African American")
 ```
 
-## Example: Identify patients who's surgery time is longer than 10 hours
+## Example III.ii: Identify patients who's surgery time is longer than 10 hours
 ```{r}
-hist(surgery_data$hour)
+hist(surgery_data$hour,
+     main = "Distribution of Surgery Duration",
+     xlab = "Surgery Duration (hour)")
 
 surgery_data_10hr<- surgery_data%>%
   filter(hour > 10)
 
-hist(surgery_data_10hr$hour)
+hist(surgery_data_10hr$hour,
+     main = "Distribution of Surgery Duration(Hour > 10)",
+     xlab = "Surgery Duration (hour)")
 ```
 
 # IV. Summarize Function
-## Example: Identify the average surgery hour for each race group
+## Example IV.i: Identify the average surgery hour for each race group
 ```{r}
 surgery_data%>%
   group_by(race)%>%
@@ -137,7 +164,7 @@ surgery_data%>%
   mutate(perc = count/sum(count) * 100)
 ```
 
-## Example: Further investigate within each race, what's the average surgery hour for different asa statis
+## Example IV.ii: Further investigate within each race, what's the average surgery hour for different asa statis
 ```{r}
 table <- surgery_data%>%
   mutate(asa_status = if_else(is.na(asa_status), "Unknown", asa_status))%>%
