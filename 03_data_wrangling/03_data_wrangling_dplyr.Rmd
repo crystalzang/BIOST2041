@@ -1,0 +1,163 @@
+---
+title: "Data Wrangling Using Dplyr"
+author: "TA Crystal"
+date: "9/8/2020"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Loading R packages
+* dplyr: dataframe manipulation   
+* ggplot2: visualization    
+```{r message=FALSE, warning=FALSE}
+#install packages only if you have not already done so 
+list.of.packages <- c( "dplyr", "tidyverse")
+new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+```
+
+
+```{r message=FALSE, warning=FALSE}
+if(length(new.packages)) install.packages(new.packages)
+
+#library packages
+for (pkg in c("dplyr", "tidyverse")) {
+  library(pkg, character.only = TRUE)
+  }
+```
+
+
+```{r}
+load("surgery_data.RData")
+```
+
+
+# I. Mutate Function
+## Example: Change the label for a categorical variable
+```{r}
+anyNA(surgery_data$gender) #check whether there are NA values
+
+table(is.na(surgery_data$gender)) #gives the count of NA values: 3
+
+class(surgery_data$gender) #check the data type 
+
+table(surgery_data$gender) #check how many non-NA levels are there in the gender variable
+
+#overwirte gender variable
+surgery_data <- surgery_data%>% 
+  mutate(gender = if_else(gender == "F", "Female", 
+                  if_else(gender == "M", "Male", "Unknown")))
+           
+```
+
+## Example: Group patients whose race, gender are NA into a seperate group
+There are 480 patients who have NA values for race. We don't want to exclude these sample from our data, let's treat them as a seperate group called "Unknown"
+```{r}
+anyNA(surgery_data$race) #check whether there are NA values
+table(is.na(surgery_data$race)) #gives the count of NA values: 3
+table(surgery_data$race)
+
+surgery_data <- surgery_data%>%
+  mutate(race = if_else(is.na(race), "Unknown", race))%>%
+  mutate(gender = if_else(is.na(gender), "Unknown", gender))
+
+table(surgery_data$race)
+table(surgery_data$gender)
+
+
+anyNA(surgery_data$race)
+anyNA(surgery_data$gender)
+```
+
+
+
+## Example: Create age groups from numeric a age variable
+```{r}
+anyNA(surgery_data$age) #check whether there are NA values
+
+table(is.na(surgery_data$age)) #gives the count of NA values: 3
+
+class(surgery_data$age) #check the data type 
+
+summary(surgery_data$age) #check the range of the variable
+
+hist(surgery_data$age) #check the distribution of the variable, which helps us to seperate into groups
+
+surgery_data <- surgery_data%>%
+  mutate(age_group = if_else(age < 20, "less than 20",
+                     if_else(age < 40, "20-40 yrs",
+                     if_else(age < 60, "40-60 yrs",
+                     if_else(age < 80, "60-80 yrs", 
+                             "80+")))))
+table(surgery_data$age_group)
+```
+
+
+# II. Select Function
+### Example: Only keep variables of interest in the dataframe
+```{r}
+surgery_data_subset <- surgery_data%>%
+  select(age, gender, bmi, hour, race)
+glimpse(surgery_data_subset)
+```
+
+
+# III. Filter Function
+## Example: Identify one African American patients
+```{r}
+table(surgery_data$race)
+
+surgery_data_AfricanAmerican <- surgery_data%>%
+  filter(race == "African American")
+```
+
+## Example: Identify patients who's surgery time is longer than 10 hours
+```{r}
+hist(surgery_data$hour)
+
+surgery_data_10hr<- surgery_data%>%
+  filter(hour > 10)
+
+hist(surgery_data_10hr$hour)
+```
+
+# IV. Summarize Function
+## Example: Identify the average surgery hour for each race group
+```{r}
+surgery_data%>%
+  group_by(race)%>%
+  summarize(count = n(),
+            hour_mean = mean(hour),
+           hour_median= median(hour),
+           hour_sd = sd(hour))%>%
+  mutate(perc = count/sum(count) * 100)
+```
+
+## Example: Further investigate within each race, what's the average surgery hour for different asa statis
+```{r}
+table <- surgery_data%>%
+  mutate(asa_status = if_else(is.na(asa_status), "Unknown", asa_status))%>%
+  group_by(race, asa_status)%>%
+  summarize(count = n(),
+            hour_mean = mean(hour),
+            hour_median= median(hour),
+            hour_sd = sd(hour))%>%
+  filter(count > 5)
+
+table
+```
+
+
+# V. Arrange Function 
+Arrange the median surgery hour in race+asa status group in descending order
+```{r}
+table%>%
+  arrange(-hour_median)
+```
+
+
+
