@@ -1,0 +1,33 @@
+---
+title: "BIOST 2041"
+author: "Ziwei Crystal Zang"
+date: "9/21/2020"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Library packages
+## Title
+Text,.....
+```{r message=FALSE, warning=FALSE}
+#library packages
+for (pkg in c("psych", "ggplot2", "dplyr", "tidyr")) {
+  library(pkg, character.only = TRUE)
+}
+```
+
+```{r message = FALSE}
+load("surgery_data.Rdata")
+
+age <- surgery_data$age
+
+dim(surgery_data)
+length(age)
+class(age)
+```
+

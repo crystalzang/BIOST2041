@@ -1,7 +1,7 @@
 ---
 title: "Data Wrangling Using Dplyr"
 author: "TA Crystal"
-date: "9/8/2020"
+date: "10/1/2020"
 output:
   pdf_document:
     toc: yes
@@ -22,10 +22,6 @@ knitr::opts_chunk$set(echo = TRUE)
 #install packages only if you have not already done so 
 list.of.packages <- c( "dplyr", "tidyverse")
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
-```
-
-
-```{r message=FALSE, warning=FALSE}
 if(length(new.packages)) install.packages(new.packages)
 
 #library packages
@@ -36,12 +32,15 @@ for (pkg in c("dplyr", "tidyverse")) {
 
 
 ```{r}
+# read in data
 load("surgery_data.RData")
 ```
 
 
 # I. Mutate Function
 ## Example I.i: Change the label for a categorical variable
+Instead of abrreviation for the gender, "F" and "M", we want them to be "Female" and "Male". 
+
 Before any data wrangling, we will always perform the 3-step procedure for the variable we are interested in:        
 
 1. check the data type (character or integer or others)
@@ -60,6 +59,7 @@ table(is.na(surgery_data$gender)) #gives the count of NA values: 3
 
 #step 3.
 table(surgery_data$gender) #check how many non-NA levels are there in the gender variable
+
 
 #overwirte gender variable
 surgery_data <- surgery_data%>% 
@@ -96,6 +96,7 @@ anyNA(surgery_data$gender)
 
 
 ## Example I.iii: Create age groups from a numeric age variable
+Currently age is a numeric variable, we want to form five age groups for analysis: less than 20, 20-40, 40-60, 60-80, 80+. 
 ```{r}
 #step 1
 class(surgery_data$age) #check the data type 
@@ -130,7 +131,7 @@ glimpse(surgery_data_subset)
 
 
 # III. Filter Function
-## Example III.i: Identify one African American patients
+## Example III.i: Identify only African American patients
 ```{r}
 table(surgery_data$race)
 

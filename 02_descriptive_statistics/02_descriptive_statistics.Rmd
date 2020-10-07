@@ -17,8 +17,8 @@ knitr::opts_chunk$set(echo = TRUE)
 #install packages only if you have not already done so 
 list.of.packages <- c("psych", "ggplot2", "dplyr")
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
-if(length(new.packages)) install.packages(new.packages)
 
+if(length(new.packages)) install.packages(new.packages)
 #library packages
 for (pkg in c("psych", "ggplot2", "dplyr")) {
   library(pkg, character.only = TRUE)

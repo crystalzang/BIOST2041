@@ -1,0 +1,84 @@
+---
+title: "M6"
+author: "Ziwei Crystal Zang"
+date: "10/7/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(foreign)
+library(dplyr)
+```
+
+# Example 1.Paired t test
+```{r}
+set.seed(1)
+n = 30
+pre <- round(rnorm(n=n, mean = 5.5, sd=0.9),digits=2)
+hist(pre)
+
+post <- round(rnorm(n=n, mean = 4.4, sd=0.9),digits=2)
+hist(post)
+
+data <- data.frame(cbind(pre, post))
+data<-data%>%
+  mutate(diff = round(pre - post,digits=2))
+
+t.test(data$diff, conf.level = 0.99)
+t.test(data$pre, data$post, paired=TRUE, conf.level = 0.99)
+
+write.dta(data, "M6_example_data.dta")
+data_check <- read.dta("M6_example_data.dta")
+```
+
+
+# Example 2. Two sample t test with pooled/equal variance
+- two-sided test 
+```{r}
+set.seed(1)
+n1 = 120
+var1 <- rnorm(n=n1, mean = 55, sd=2)
+hist(var1)
+
+n2=120
+var2 <- rnorm(n=n2, mean = 49, sd=1.9)
+hist(var2)
+
+data <- data.frame(
+ group= as.factor(c(rep("var1", n1), rep("var2", n2))),
+  value = c(var1, var2)
+)
+
+var.test(value ~ group, data=data, alternative = "two.sided", conf.level=0.95)
+
+t.test(value ~ group, data=data, alternative = "two.sided", var.equal = TRUE, conf.level=0.95)
+
+#write.dta(data, "M6_example_data.dta")
+```
+
+
+
+# Example 3. Two sample t test with unequal variance 
+- upper tail test 
+```{r}
+set.seed(1)
+n1 = 40
+var1 <- rnorm(n=n1, mean = 120, sd=10.4)
+hist(var1)
+
+n2=40
+var2 <- rnorm(n=n2, mean = 118, sd=7.8)
+hist(var2)
+
+data <- data.frame(
+ group= as.factor(c(rep("var1", n1), rep("var2", n2))),
+  value = c(var1, var2)
+)
+
+var.test(value ~ group, data=data, alternative = "two.sided", conf.level=0.95)
+
+t.test(value ~ group, data=data, alternative = "greater", conf.level=0.95)
+#write.dta(data, "M6_example_data.dta")
+```
+
