@@ -1,5 +1,5 @@
 ---
-title: "M6 Data Analysis Solutions"
+title: "M5 Data Analysis Solutions"
 author: "Arvon Clemons II"
 date: "10/11/2020"
 output: html_document
@@ -168,7 +168,7 @@ We assume the researchers conducted a Simple Random Sample and as we can see fro
 ## Hypothesis Testing
 
 ```{r}
-(testMCN <- chisq.test(tableMCN, correct = F))
+(testMCN <- mcnemar.test(tableMCN[-3, -3], correct = F))
 
 (cvMCN <- qchisq(p = 1 - 0.05, df = 1))
 ```
