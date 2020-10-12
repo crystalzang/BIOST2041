@@ -1,0 +1,180 @@
+---
+title: "M6 Data Analysis Solutions"
+author: "Arvon Clemons II"
+date: "10/11/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(tidyr)
+library(tibble)
+library(ggplot2)
+load('mamexp.RData')
+load('LungCancer.Rdata')
+```
+
+# Part 1. Representation in Research
+
+## Numerical and Graphical Summary
+
+```{r}
+tbl1 <- tibble("Race/Ethnicity" = c("Distribution of Pop", "Number in Lung Cancer Trial"),
+       "American Indian/Alaska Native"=c(0.007, 12),
+       "Asian/Pacific Islander"=c(0.038, 54),
+       "Black"=c(0.108, 316),
+       "Hispanic" = c(0.091, 60),
+       "White non-Hispanic" = c(0.756, 3855)
+)
+knitr::kable(tbl1)
+```
+
+```{r}
+Expected <- lungcancer$race %>% 
+  as.factor %>% 
+  levels() %>% 
+  rep(sum(tbl1[2, -1]) * unlist(tbl1[1, -1])) %>% sample() %>% as_tibble()
+colnames(Expected) <- "race"
+
+exp1 <- Expected %>% 
+  group_by(race) %>% 
+  tally(name = "Expected_Count")
+
+(obs1 <- lungcancer %>% 
+   group_by(race) %>% 
+   tally(name = "Observed_Count") %>% 
+   mutate(Enrolled_Prop = Observed_Count / sum(Observed_Count)) %>% left_join(exp1, by = "race")
+  )
+
+ggplot(lungcancer, aes(x = race, fill = race)) + 
+  geom_bar() +
+  ggtitle("Enrolled Participants by Race/Ethnicity") +
+  xlab("Race/Ethnicity") +
+  ylab("Count")
+
+ggplot(Expected, aes(x = race, fill = race)) +
+  geom_bar() +
+  ggtitle("Population by Race/Ethnicity") +
+  xlab("Race/Ethnicity") +
+  ylab("Expected Count")
+```
+
+## Hypothesis and Conditions
+
+The aim of the research is to investigate whether race/ethnicity are being over or under represented in clinical trials. In order for any group to be disproportionally represented would require that such at least one group be enrolled in clinical trials at a proportion differing from the population.
+
+The method best suited for this problem is Pearson's chi-square goodness-of-fit test with $H_0:  \hat{p_i} - {p_i} = 0$ for each race/ethnicity. Meaning that the population proportion matches that of the clinical trial participants. The alternative hypothesis $H_1: \hat{p_i} - {p_i} \neq 0 is that for at least one race/ethnicity group the proportions differ between the population and those enrolled in the clinical trial.
+
+The conditions that are required for this are the following:
+1. The data come from a simple random sample
+2. The expected count is at least 5 for each group
+
+The data we have fits both of the conditions and as such we proceed with test.
+
+## Hypothesis Testing
+
+```{r}
+set.seed(123)
+(testGOF <- chisq.test(table(lungcancer), p=unlist(tbl1[1, -1]),correct = F))
+
+(cvGOF <- qchisq(p = 1 - 0.01, df = 4))
+```
+
+As can be seen above, the test statistic from the above is `r testGOF$statistic` which is much greater than our calculated critical value of `r cvGOF`, this is in combination with the p-value of `r signif(testGOF$p.val, 3)` which is very much smaller than our significance level of 0.01. 
+
+## Conclusion
+
+Given the above test results one should conclude that there sufficient evidence to reject the null hypothesis and thus conclude that in the true population there is disproportionate participation in lung cancer clinical trials by race/ethnicity.
+
+# Part 2. Mammography
+
+## Data Summary
+```{r}
+mamexp %>% 
+  select(me, famhist) %>% 
+  table() %>% knitr::kable()
+```
+
+
+## Hypothesis and Conditions
+
+The aim of this research is to identify whether or not there is a dependent relationship between an womans' experience with mammography and having a family history of breast cancer. The variables used in this study are both categorical: (1) mammography experience (never, within one year, over one year ago), (2)mother or sister with a history of breast cancer (no, yes).
+
+This suggests that the best method to use for this research question would be the chi-square Test of Independence. The conditions for this test are the following:
+1. The data come from a simple random sample
+2. The expected count is at least 5 for each group
+
+```{r}
+(tableOBS <- mamexp %>% 
+  select(me, famhist) %>% 
+  table() %>% addmargins())
+
+tableEXP <- matrix(NA, nrow = 3, ncol = 2, dimnames = list(c("never", ">1 year", "<1 year"), c("no", "yes")))
+
+for(i in 1:3){
+  for(j in 1:2){
+    tableEXP[i, j] <- (tableOBS[i, 3] * tableOBS[4, j]) / tableOBS[4, 3]
+  }
+}
+tableEXP
+```
+
+As we can see from the above table, there is indeed at least 5 counts for each group and we assume the sampling was a simple random.
+
+The hypotheses for this test would be $H_0:$ Distribution of "no/yes" responses for Family History are independent of "never, <1 year, >1 year" responses for Mammography Experience and $H_1:$ Distribution of "no/yes" responses for Family History are  NOT independent of "never, <1 year, >1 year" responses for Mammography Experience.
+
+## Hypothesis Testing
+
+```{r}
+(testIND <- chisq.test(mamexp$me, mamexp$famhist, correct = FALSE))
+
+(cvIND <- qchisq(p = 1 - 0.10, df = 2))
+```
+
+As can be seen above, the test statistic from the above is `r testIND$statistic` which is much greater than our calculated critical value of `r cvIND`, this is in combination with the p-value of `r signif(testIND$p.val, 3)` which is very much smaller than our significance level of 0.10. As such we would assess that there is sufficient evidence to REJECT the null hypothesis.
+
+## Conclusion
+
+Given the above test results one should conclude that there sufficient evidence to reject the null hypothesis and thus conclude that in the true population there is a dependent relationship between mammography experience and family history of breast cancer.
+
+
+# Part 3. Hip Protectors
+
+## Hypothesis and Conditions
+
+The researchers are interested in whether or not hip protectors protect against hip fractures, using individuals that are wearing hip protectors on one hip but not the other.
+
+Since the proportions of comparison are the hips on a single individual, one unprotected and another protected, for the same event of falling and possibly receiving a fracture this would be a clear example of a dependent hypothesis test as one outcome isn't entirely unrelated to the other.
+
+The hip protectors (while left unsaid) are switched for the participants, so the contigency table is a pair off yes/no responses. As such the most appropriate test for this would be McNemar's Test.
+
+```{r}
+(tableMCN <- matrix(data = c(309, 15, 324, 10, 2, 12, 319, 17, 336),nrow = 3, ncol = 3, dimnames = list(c("Non-Fractured", "Fractured", "Sum"), c("Non-Fractured", "Fractured", "Sum"))))
+  
+  
+```
+
+In this test our hypotheses would be $H_0: p_b = p_c$ and $H_1: p_b \neq p_c$. With $p_b$ being the true proportion of “successes” in the first observation and “failures” in the second observation and $p_c$ being the true proportion of “failures” in the first observation and “successes” in the second observation.
+
+In other words, the null hypothesis is that the true proportion of fractured right hips while the protector was worn on the left hip and the true proportion of fractured left hips while the protector was worn on the right hip are equal, with the alternative hypothesis being that this is unequal.
+
+The conditions for this test are the following:
+1: Simple Random Sample
+2: $b + c \geq 10$
+
+We assume the researchers conducted a Simple Random Sample and as we can see from the table above, the counts in B (10) and C(15) total to 25 and thus indeeds are equal to or greater than 10.
+
+## Hypothesis Testing
+
+```{r}
+(testMCN <- chisq.test(tableMCN, correct = F))
+
+(cvMCN <- qchisq(p = 1 - 0.05, df = 1))
+```
+
+As can be seen above, the test statistic from the above is `r testMCN$statistic` which is lesser than our calculated critical value of `r cvMCN`, this is in combination with the p-value of `r signif(testMCN$p.val, 3)` which is larger than our significance level of 0.05. As such we would assess that there is not enough sufficient evidence and therefore we FAIL TO REJECT the null hypothesis.
+
+## Conclusion
+
+We are forced to assume that the true proportion of hip fractures are equal between wearing them or not.
