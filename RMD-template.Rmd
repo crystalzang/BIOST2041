@@ -1,0 +1,37 @@
+---
+title: "Put the Assignment Name Here"
+author: "Put your name here"
+date: "Put the date here"
+output:
+  html_document:
+    df_print: paged
+    toc: true
+    number_sections: true
+    toc_depth: '3'
+    code_folding: show
+---
+
+```{r,echo=FALSE,message=FALSE,warning=FALSE}
+require(knitr)
+# Set so that long lines in R will be wrapped:
+opts_chunk$set(tidy.opts=list(width.cutoff=100),tidy=TRUE)
+```
+
+
+# This is a header - change this to a meaningful section title
+
+```{r}
+
+# Put your R commands in an R chunk like this one. 
+
+```
+
+You should write your response/conclusions/etc in this space. 
+
+
+
+# Session Information
+
+```{r}
+sessionInfo()
+```
