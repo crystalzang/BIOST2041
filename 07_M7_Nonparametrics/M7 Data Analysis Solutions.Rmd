@@ -1,0 +1,240 @@
+---
+title: "M7: Data Analysis Solutions"
+author: "Arvon Clemons II"
+date: "10/27/2020"
+output:
+  html_document:
+    df_print: paged
+    toc: true
+    number_sections: true
+    toc_depth: '3'
+    code_folding: show
+---
+
+```{r,echo=FALSE,message=FALSE,warning=FALSE}
+require(knitr)
+load('RA_treatment.RData')
+library(tidyverse)
+# Set so that long lines in R will be wrapped:
+opts_chunk$set(tidy.opts=list(width.cutoff=100),tidy=TRUE)
+```
+
+# CDAI and Treatment with Biologics 
+
+
+## Numerical and Visual Descriptive Statistics
+
+ 
+```{r}
+p1 <- ra %>% 
+  filter(!is.na(Biologics) & !is.na(cdai)) %>% 
+  ggplot()
+
+labels <- c("0" = "No Treatment Received", '1' = "Treatment Received") #factor labels
+
+p1 + aes(y = cdai) + 
+  facet_wrap(. ~ Biologics, labeller = labeller(Biologics = labels)) + 
+  geom_boxplot(fill = "royalblue4", colour = "black", na.rm = T) +
+  ggtitle("Distribution of Disease Activity by Biologics Treatment") +
+  ylab("Disease Activity Indicator")
+
+p1 + aes(x = cdai) + 
+  facet_wrap(. ~ Biologics, labeller = labeller(Biologics = labels)) + 
+  geom_density(color = 'black', fill = "royalblue4", na.rm = T) +
+   ggtitle("Distribution of Disease Activity by Biologics Treatment") +
+  xlab("Disease Activity Indicator")
+
+no_missing1 <- ra %>% 
+  select(Biologics, cdai) %>% 
+  drop_na()
+
+numSum <- psych::describeBy(cdai~Biologics, data = no_missing1, fast = TRUE)
+knitr::kable(numSum$`0`, caption = "No Treatment Received"); knitr::kable(numSum$`1`, caption = "Treatment Received")
+```
+
+## Description of Wilcoxon Rank Sum
+
+### Hypotheses 
+$H_{0}$: The population median of clinical disease activity is equal between biological agent treatment.\n
+$H_{1}$: The population median of clinical disease activity is NOT equal between biological agent treatment.
+
+### Conditions Check
+1. Two independent random samples
+2. Population distributions similarly shaped
+
+We assume the data comes from a random sample which participants have been randomly selected into either treatment group. We also assume that the distribution of treatments within the population are similarly shaped as is suggested by the graphs of the sample distribution.
+
+### Hypothesis Test
+```{r}
+(test1 <- wilcox.test(no_missing1$cdai ~ no_missing1$Biologics))
+```
+
+
+### Statistical Decision
+
+From the above we receive a p-value of `r test1$p.value` which indicates the probability of getting the observed median assuming the null hypothesis is true. This is greater than our significance level of 0.05, indicating we do not have enough evidence and thus *FAIL TO REJECT* the null hypothesis.
+
+## Conclusion
+
+The population median of clinical disease activity is equal between those who receive biologics for treatment and those who do not. This supports that there is no association between receiving biologics treatment and clinical disease activity.
+
+# Age and CDAI
+
+## Numerical and Visual Descriptive Statistics
+
+```{r}
+p2 <- ra %>% 
+  filter(!is.na(AgeGp) & !is.na(CDAI_YN)) %>% 
+  mutate(AgeGp = if_else(AgeGp == "1", "control", "elderly"), CDAI_YN = if_else(CDAI_YN == "1", "No","Yes"))
+
+p2 %>% ggplot(aes(x = AgeGp, fill = CDAI_YN)) +
+  geom_bar(position = "dodge") + 
+  scale_fill_manual(values=c('#506FA9','#E69F00')) +
+  ggtitle("Distribution of Age Group by CDAI Measurement") +
+  xlab("Age Group(40 - 70 yrs, 75+ yrs)") +
+  labs(fill = "CDAI Measure Taken")
+
+table(p2$AgeGp, p2$CDAI_YN) %>% knitr::kable(caption = "Table of Age Groups by CDAI Measurement")
+```
+
+
+## Description of Fisher's Exact Test
+
+
+### Hypotheses
+
+$H_{0}$: Age Group is NOT associated with getting a CDAI measurement.\n
+$H_{1}$: Age Group is associated with getting a CDAI measurement.
+
+### Conditions
+
+The only condition is that our data is a simple random sample, which we assume is true such as in Part 1.
+
+### Hypothesis Test
+
+```{r}
+(test2 <- fisher.test(table(p2$AgeGp, p2$CDAI_YN)))
+```
+
+### Statistical Decision
+
+From the above we observe a p-value of `r test2$p.value` which is the probability of getting the observed results under the assumption that the null hypothesis is true.Since this p-value is smaller than our significance level of 0.05, we assume that we have enough evidence to *REJECT* the null hypothesis.
+
+### Could we used $\chi^2$?
+
+```{r}
+t1 <- table(p2$AgeGp, p2$CDAI_YN)
+
+tableOBS <- t1 %>% 
+  cbind(rowSums(t1)) %>%
+  rbind(colSums(t1))
+
+tableOBS[3,3] <- sum(t1)
+
+tableEXP <- matrix(NA, nrow = 2, ncol = 2, dimnames = list(c("control","elderly"), c("No", "Yes")))
+
+for(i in 1:2){
+  for(j in 1:2){
+    tableEXP[i, j] <- (tableOBS[i, 3] * tableOBS[3, j]) / tableOBS[3, 3]
+  }
+}
+tableEXP
+```
+
+The conditions for a chi-squared test of independence are the following:
+1. The data come from a simple random sample
+2. The expected count is at least 5 for each group
+
+As can be seen above, the expected count for each group is at least 5. Thus we could have answered this same question using a $\chi^2$ Test for Independence.
+
+## Conclusion
+
+We conclude that there **is** an association between Age Group and getting a CDAI measurement. Those who are 40 - 70 years of age are `r test2$estimate` times less likely to NOT get a measurement for Clinical Disease Activity than those who are 75+ years of age.
+
+# Age and Treatment with Biologics
+
+
+## Numerical and Visual Descriptive Statistics
+
+```{r}
+p3 <- ra %>% 
+  filter(!is.na(Biologics) & !is.na(AgeGp)) %>% 
+  mutate(Biologics = if_else(Biologics == "0", "No Treatment Received","Treatment Received"),
+         AgeGp = if_else(AgeGp == "1", "control", "elderly"))
+
+p3 %>% ggplot(aes(x = Biologics, fill = AgeGp)) +
+  geom_bar(position = "dodge") + 
+  scale_fill_manual(values=c('#506FA9','#E69F00')) +
+  ggtitle("Distribution of Biologics Treatment by Age Group") +
+  xlab("Biologics Treatment") +
+  labs(fill = "Age Group")
+
+table(p3$Biologics, p3$AgeGp) %>% knitr::kable(caption = "Table of Biologics Treatment by Age Group")
+```
+
+
+## Description of Fisher's Exact Test
+
+### Hypotheses
+
+$H_{0}$: Receiving Biologics treatment is NOT associated with age group.\n
+$H_{1}$: Receiving Biologics treatment is associated with age group.
+
+### Conditions
+
+The only condition is that our data is a simple random sample, which we assume is true such as in Part 1 & 2.
+
+### Hypothesis Test
+
+```{r}
+(test3 <- fisher.test(table(p3$Biologics, p3$AgeGp)))
+```
+
+
+### Statistical Decision
+
+From the above we observe a p-value of `r test3$p.value` which is the probability of getting the observed results under the assumption that the null hypothesis is true.Since this p-value is smaller than our significance level of 0.05, we assume that we have enough evidence to *REJECT* the null hypothesis.
+
+### Could we used $\chi^2$?
+
+```{r}
+t2 <- table(p3$Biologics, p3$AgeGp)
+
+tableOBS <- t2 %>% 
+  cbind(rowSums(t2)) %>%
+  rbind(colSums(t2))
+
+tableOBS[3,3] <- sum(t2)
+
+tableEXP <- matrix(NA, nrow = 2, ncol = 2,
+                   dimnames = list(c("Not Received","Received"), c("Control", "Elderly")))
+
+for(i in 1:2){
+  for(j in 1:2){
+    tableEXP[i, j] <- (tableOBS[i, 3] * tableOBS[3, j]) / tableOBS[3, 3]
+  }
+}
+tableEXP
+```
+
+The conditions for a chi-squared test of homogeneity are the following:
+1. The data come from a simple random sample
+2. The expected count is at least 5 for each group
+
+As can be seen above, the expected count for each group is at least 5. Thus we could have answered this same question using a $\chi^2$ Test for Homogeneity.
+
+## Conclusion
+
+We conclude that there **is** an association between receiving Biologics treatment and age group. Those who did not receive treatment are `r test3$estimate` times less likely to be 40 - 70 yrs of age than those who did receive treatment.
+
+# Comment on how your findings in Parts 2 & 3 might change the conclusions from Part 1.
+
+The initial conclusion is that there is no association between receiving biologics treatment for RA and Clinical Disease Activity. This could lead to an impression that regardless of disease severity, people receive treatment.
+
+However the results from parts 1 and 2 show that this may not be the case for those 75 years and older as they disproportionately are measured less for disease activity as well as receive treatment for biologics. This doesn't contradict the statistical conclusion from Part 1, but does paint the practical significance differently. Sure there may not be a difference across CDAI for whether one receives treatment or not, but for both variables there is a difference by age.
+
+# Session Information
+
+```{r}
+sessionInfo()
+```
