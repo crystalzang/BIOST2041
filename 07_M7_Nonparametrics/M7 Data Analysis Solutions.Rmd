@@ -74,6 +74,25 @@ We assume the data comes from a random sample which participants have been rando
 
 From the above we receive a p-value of `r test1$p.value` which indicates the probability of getting the observed median assuming the null hypothesis is true. This is greater than our significance level of 0.05, indicating we do not have enough evidence and thus *FAIL TO REJECT* the null hypothesis.
 
+### Could we have used a parametric test?
+
+The parametric analogue to the Wilcoxon Rank Sum test would be the two-sample T test. The conditions for that are:
+1) Simple Random Sample of two populations
+2) Both groups are independent
+3) N1 > 30 and N2 > 30 or both outcomes normally distributed
+4) Equal variance (determines which version to use)
+
+The first two conditions are assumed, the third one we can check for below
+
+```{r}
+ra %>% 
+  filter(!is.na(Biologics) & !is.na(cdai)) %>% 
+  group_by(Biologics) %>% 
+  tally() %>% knitr::kable()
+```
+
+Shows that we have at greater than 30 sample sizes for each group. Thus fulfilling all of the conditions for the two-sample T test. 
+
 ## Conclusion
 
 The population median of clinical disease activity is equal between those who receive biologics for treatment and those who do not. This supports that there is no association between receiving biologics treatment and clinical disease activity.
