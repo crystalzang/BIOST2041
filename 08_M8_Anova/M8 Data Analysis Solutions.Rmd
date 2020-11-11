@@ -1,0 +1,141 @@
+---
+title: "M8: Data Analysis Solutions"
+author: "Arvon Clemons II"
+date: "11/10/2020"
+output:
+  html_document:
+    df_print: paged
+    toc: true
+    number_sections: true
+    toc_depth: '3'
+    code_folding: show
+---
+
+```{r,echo=FALSE,message=FALSE,warning=FALSE}
+require(knitr)
+library(dplyr)
+library(ggplot2)
+library(lsmeans)
+data <- load('./hsb2.RData')
+# Set so that long lines in R will be wrapped:
+opts_chunk$set(tidy.opts=list(width.cutoff=100),tidy=TRUE)
+```
+
+# Part 1: Science Scores
+
+Research question: Are the average scores for the science subsection of the standardized tests different by type of academic program? If so, how?
+
+## Numerical and Visual Description
+
+```{r}
+psych::describeBy(hsb2[, c('science','prog')], group = 'prog')
+
+p <- ggplot(hsb2)
+
+p + aes(x = science, fill = prog) + geom_boxplot() +
+  theme(legend.title=element_blank()) +
+  xlab("Avg Science Score") +
+  ggtitle("Average Science Scores by Program")
+```
+## Hypothesis Testing
+$H_{0}: \mu_{0} = \mu{1} = \mu{2}$
+
+The population mean science standardized score is equal across the academic, general, and vocation programs. 
+
+$H{1}: \mu_{i} \neq \mu_{j}$ for some $i,j$.
+
+The population mean science standardized score is not equal between at least one pair of program.
+
+The conditions necessary to perform a one-way ANOVA are:
+1. $k$ independent populations
+2. Random Samples from each $k$ population
+3. $n_{k} \geq 30$ for each group or each group is normally distributed
+4. Equal population variances
+
+The first two conditions are assumed based on the problem description, the third condition can be confirmed from the above numerical description. The fourth condition will not be taught in this course and as such we will assume it is true as well.
+
+## Statistical Test
+
+```{r}
+m1 <- aov(science~factor(prog), data = hsb2)
+summary(m1)
+
+m1F <- lm(science ~ factor(prog), data = hsb2)
+(m1LSM <- lsmeans(m1F, pairwise ~ factor(prog), adjust = 'b'))
+```
+
+If the population mean science score is the same for all three programs, the probability that we would observe results as or more extreme than what we observed (F>8.128) is `r round(summary(m1)[[1]][1, 5],5)`. Since the p-value is `r round(summary(m1)[[1]][1, 5], 5)` and is less than our chosen significance level of 0.05 we have sufficient evidence to **REJECT THE NULL**.
+
+The post-hoc comparison shows that the population mean science scores differ between two program pairings, the academic/vocation as well as the general/vocation pairings at adjusted p-values of 0.0003 and 0.0255 respectively. 
+
+
+## Conclusion
+
+We conclude that the population mean science scores are **not equal** between academic programs, in particular post-hoc comparison shows that the academic/vocation and general/vocation pairs have unequal population means.
+
+# Part 2: Writing Scores
+
+Are the average scores for the writing subsection of the standardized tests different by type of academic program and/or socioeconomic status? If so, how?
+
+## Numerical and Visual Description
+
+```{r}
+psych::describeBy(hsb2[, c('write','ses','prog' )], group = c('prog','ses'))
+
+p + aes(x = prog, y = write, fill = ses) + geom_boxplot() +
+  theme(legend.title=element_blank()) +
+  xlab("Academic Program") +
+  ggtitle("Average Writeing Scores by Program and Socioeconomic Status")
+```
+
+
+## Hypothesis Testing
+
+The conditions necessary to perform a two-way ANOVA are:
+1. $k$ independent populations
+2. Random Samples from each $k$ population
+3. $n_{k} \geq 30$ for each group or each group is normally distributed
+4. Equal population variances
+
+The first two conditions are assumed based on the problem description, the third condition can be confirmed from the above numerical description. The fourth condition will not be taught in this course and as such we will assume it is true as well.
+
+Before performing the two-way ANOVA we should test for interactions:
+
+$H_{0}:$ There is no effect of an interaction on the mean writing score
+$H_{1}:$ There is an effect of an interaction on the mean writing score
+
+The conditions for the Interaction Test are similar to the two-way ANOVA and thus we will consider them already met.
+
+
+## Statistical Test
+```{r}
+with(hsb2, interaction.plot(ses, prog, write))
+m2 <- aov(write~ses*prog, data = hsb2)
+summary(m2)
+```
+
+From the above results, the probability of observing an interaction between socioeconomic status and program type is 0.70 and as such we do not have sufficient evidence, thus we **FAIL TO REJECT** the null hypothesis. We conclude that we do not have interaction between the two variables.
+
+As such we move onto conducting a two-way ANOVA on each main effect.
+
+**NOTE**: Some students may run `aov(write~prog*ses, data = hsb2)` which tells them there is only significance with the `prog` variable. As such subsequently they may choose to only conduct a pos-hoc analysis on `prog`. In a similar fashion, some students may use `with(hsb2, interaction.plot(prog, ses, write))` when creating their interaction plot, which can falsely suggest that there is interaction where the `aov` model shows there is none.
+
+```{r}
+m2F <- lm(write ~ factor(ses), data = hsb2)
+(m2LSM <- lsmeans(m2F, pairwise ~ factor(ses), adjust = 'b'))
+
+m3F <- lm(write ~ factor(prog), data = hsb2)
+(m3LSM <- lsmeans(m3F, pairwise ~ factor(prog), adjust = 'b'))
+```
+
+The above pos-hoc comparisons shows that the population mean writing score differs significantly in 5 different pairings. For socioeconomic status it is high/low and high/middle, for academic program it is all 3 every combination.
+
+## Conclusion
+
+We conclude that average writing scores are **not equal**  between socioeconomic status and academic programs. In particularly between high/low and high/middle socioeconimic status as well as all 3 kinds of academic programs.
+
+# Session Information
+
+```{r}
+sessionInfo()
+```
